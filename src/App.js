@@ -5,8 +5,16 @@ import {useRef} from "react"
 
 function App() {
   const playerRef = useRef()
+  const fileRef = useRef()
 
-  const play = () => {
+  const play = (file) => {
+    const player = new PlayerElement()
+    playerRef.current.appendChild(player)
+    player.soundFont = "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus"
+    player.src = file
+  }
+
+  const playGenerated = () => {
     // Start with a new track
     const track = new MidiWriter.Track();
 
@@ -25,20 +33,38 @@ function App() {
       ], function(event, index) {
         return {sequential: true};
       }
-    );
+    )
 
     // Generate a data URI
     const write = new MidiWriter.Writer(track);
+    play(write.dataUri())
+  }
 
-    const player = new PlayerElement()
-    playerRef.current.appendChild(player)
-    player.soundFont = "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus"
-    player.src = write.dataUri()
+  const playUploaded = () => {
+    const file = fileRef.current.files[0]
+    if (!file) {
+      alert('No file selected')
+      return
+    }
+    const reader = new FileReader();
+
+    reader.addEventListener(
+      "load",
+      () => {
+        play(reader.result)
+      },
+      false,
+    )
+
+    reader.readAsDataURL(file)
   }
 
   return (
     <div className="App">
-      <button onClick={play}>play</button>
+      <p>Upload file or play a generated one</p>
+      <input ref={fileRef} type="file"/>
+      <button onClick={playUploaded}>play uploaded</button>
+      <button onClick={playGenerated}>play generated</button>
       <div ref={playerRef}/>
     </div>
   );
